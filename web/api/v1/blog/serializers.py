@@ -27,14 +27,14 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class ArticleSerializer(serializers.ModelSerializer):
-    url = serializers.CharField(source='get_absolute_url')
+    # url = serializers.CharField(source='get_absolute_url')
     author = UserSerializer()
     category = CategorySerializer()
-    comments_count = serializers.IntegerField()
+    # comments_count = serializers.IntegerField()
 
     class Meta:
         model = Article
-        fields = ('title', 'url', 'author', 'category', 'created', 'updated', 'comments_count')
+        fields = ('title', 'author', 'category', 'created', 'updated',)
 
 
 class FullArticleSerializer(ArticleSerializer):

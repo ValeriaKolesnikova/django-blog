@@ -297,3 +297,10 @@ if (SENTRY_DSN := os.environ.get('SENTRY_DSN')) and ENABLE_SENTRY:
         # django.contrib.auth) you may enable sending PII data.
         send_default_pii=True,
     )
+
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.mail.ru'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'testtest-2023@internet.ru'
+# EMAIL_HOST_PASSWORD = 'tWsfyjsn4xfemA5a3gRM'

@@ -3,12 +3,20 @@ from urllib.parse import urlencode, urljoin
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import send_mail
 from django.db import transaction
+from django.utils.html import strip_tags
+from django.utils.encoding import force_bytes
 from django.utils.translation import gettext_lazy as _
+from django.utils.http import urlsafe_base64_encode
+from django.template import loader
 from rest_framework import status
+from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
+
 
 from api.email_services import BaseEmailHandler
 
@@ -68,8 +76,47 @@ class AuthAppService:
     @transaction.atomic()
     def create_user(self, validated_data: dict):
         data = CreateUserData(**validated_data)
+        user = User.objects.create_user(
+            email=data.email,
+            password=data.password_1,
+            first_name=data.first_name,
+            last_name=data.last_name,
+            is_active=False
+        )
+        context = {
+            'full_name': user.full_name,
+            'activate_url': f'http://localhost:8008/confirm?key={user.confirmation_key}'
+        }
+        html_template = loader.render_to_string('emails/registration_email.html', context=context)
+        send_mail(
+            subject='Регистрация',
+            message='Вы успешно зарегистрировались.',
+            from_email='testtest-2023@internet.ru',
+            recipient_list=[data.email],
+            html_message=html_template,
+            fail_silently=False,
+        )
         print(f'{data=}')
-        return User
+        return user
+    
+    def send_password_reset_email(self, email: str):
+        print(f'{email=}')
+        user = User.objects.filter(email=email).first()
+        if not user:
+            raise NotFound('This email not found.')
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+        context = {
+            'reset_url': f'http://localhost:8008/reset-password?uid={uid}&token={token}'
+        }
+        html_template = loader.render_to_string('emails/reset_email.html', context=context)
+        send_mail(
+            subject='Сброс пароля.',
+            message=strip_tags(html_template),
+            from_email='testtest-2023@internet.ru',
+            recipient_list=[email],
+            html_message=html_template,
+        )
 
 
 def full_logout(request):
